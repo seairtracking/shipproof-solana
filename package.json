@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "build": "node scripts/build.mjs",
-    "preview": "node scripts/serve.mjs dist",
-    "test": "node --test --test-isolation=none"
+    "dev": "node server.mjs",
+    "build": "node build.mjs",
+    "preview": "node server.mjs dist",
+    "test": "node --test --test-isolation=none proof.test.js"
   }
 }
