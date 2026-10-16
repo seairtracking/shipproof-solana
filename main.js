@@ -2,6 +2,8 @@ import { Connection, PublicKey, Transaction, TransactionInstruction } from 'http
 import { buildProof, matchesShipment, MEMO_PROGRAM, parseProof } from './proof.js';
 
 const RPC = 'https://api.devnet.solana.com';
+const DEMO_SIGNATURE = '22qC32Z9xwwVTBGaH8xYtfGNCn7iP1i3npHzhaD5Btv9zyQeXrPH5t7Tu4U1LcwmgCaugyeaRdRopw7kw2Q6sGUE';
+const DEMO_REFERENCE = 'DEMO-TP-2026-001';
 const connection = new Connection(RPC, 'confirmed');
 let wallet = null;
 let walletAddress = '';
@@ -14,7 +16,7 @@ $('#app').innerHTML = `
     <div id="create-panel" class="panel"><div class="panel-heading"><div><p class="overline">NEW MILESTONE</p><h2>Record an event</h2></div><div class="step-mark">01 / 02</div></div><p class="panel-copy">Your wallet signs a Solana devnet Memo transaction. Only hashes of your shipment reference and evidence are published; the milestone and note remain public.</p>
       <form id="create-form"><label>Shipment reference<input id="shipment" required maxlength="80" placeholder="e.g. TP-2026-001" autocomplete="off" /></label><div class="row"><label>Milestone<select id="milestone"><option>Picked up</option><option>At origin port</option><option>In transit</option><option>Customs cleared</option><option>Out for delivery</option><option>Delivered</option><option>Exception reported</option></select></label><label>Evidence reference <small>optional</small><input id="evidence" maxlength="500" placeholder="Document ID or description" /></label></div><label>Public note <small>optional · visible on Solana</small><textarea id="note" maxlength="160" rows="3" placeholder="e.g. Container released at destination port"></textarea></label><div class="form-footer"><span>No private key is stored by ShipProof.</span><button class="primary" type="submit">Create on-chain proof <span>↗</span></button></div></form>
     </div>
-    <div id="verify-panel" class="panel hidden"><div class="panel-heading"><div><p class="overline">RECEIPT CHECK</p><h2>Verify a milestone</h2></div><div class="step-mark">02 / 02</div></div><p class="panel-copy">Paste a Solana devnet transaction signature. Verification reads the transaction directly from Solana RPC; no wallet is needed.</p><form id="verify-form"><label>Transaction signature<input id="signature" required placeholder="Paste the transaction signature" autocomplete="off" /></label><label>Shipment reference <small>optional · checks the on-chain hash</small><input id="reference" maxlength="80" placeholder="e.g. TP-2026-001" autocomplete="off" /></label><div class="form-footer"><span>Data source: Solana devnet</span><button class="primary" type="submit">Verify receipt <span>↗</span></button></div></form></div>
+    <div id="verify-panel" class="panel hidden"><div class="panel-heading"><div><p class="overline">RECEIPT CHECK</p><h2>Verify a milestone</h2></div><div class="step-mark">02 / 02</div></div><p class="panel-copy">Paste a Solana devnet transaction signature. Verification reads the transaction directly from Solana RPC; no wallet is needed.</p><button id="load-demo" class="secondary" type="button">Try a real devnet receipt ↗</button><form id="verify-form"><label>Transaction signature<input id="signature" required placeholder="Paste the transaction signature" autocomplete="off" /></label><label>Shipment reference <small>optional · checks the on-chain hash</small><input id="reference" maxlength="80" placeholder="e.g. TP-2026-001" autocomplete="off" /></label><div class="form-footer"><span>Data source: Solana devnet</span><button class="primary" type="submit">Verify receipt <span>↗</span></button></div></form></div>
     <div id="result" class="result hidden" role="status" aria-live="polite"></div><div id="error" class="error hidden" role="alert"></div>
   </section><section class="explainer"><div><p class="overline">HOW IT WORKS</p><h2>Trust the chain,<br>not the screenshot.</h2></div><div class="explainer-list"><p><strong>01</strong><span><b>Hash locally</b>The shipment reference and optional evidence are SHA-256 hashed in your browser.</span></p><p><strong>02</strong><span><b>Sign on devnet</b>Your wallet signs a Memo transaction. The hash, milestone, public note and timestamp become durable proof.</span></p><p><strong>03</strong><span><b>Verify independently</b>Anyone with the transaction signature can query Solana and compare a shipment reference to the stored hash.</span></p></div></section></main><footer><span>SHIPPROOF / A TRACKINGPORT EXPERIMENT</span><span>Built for Encode Solana Hackathon 2026 · Devnet demo</span></footer>`;
 
@@ -24,6 +26,11 @@ function shortAddress(address) { return `${address.slice(0, 4)}…${address.slic
 function setBusy(button, busy, idle) { button.disabled = busy; button.textContent = busy ? 'Working…' : idle; }
 function switchTab(tab) { document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab)); $('#create-panel').classList.toggle('hidden', tab !== 'create'); $('#verify-panel').classList.toggle('hidden', tab !== 'verify'); clearMessages(); }
 document.querySelectorAll('.tab').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
+$('#load-demo').addEventListener('click', () => {
+  $('#signature').value = DEMO_SIGNATURE;
+  $('#reference').value = DEMO_REFERENCE;
+  $('#verify-form').requestSubmit($('#verify-form button[type="submit"]'));
+});
 
 async function connectWallet() {
   const provider = window.phantom?.solana || window.solana;
